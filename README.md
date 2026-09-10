@@ -90,4 +90,4 @@
 ./tools/verify-workspace.ps1
 ```
 
-Он проверяет структуру, один исполнимый next action, существование его входов, обязательный handoff, profile Core+BMM, remote и локальные файлы в Git. Полные критерии — в [tooling/VERIFY.md](tooling/VERIFY.md).
+Он проверяет структуру, один исполнимый next action, существование его входов, profile Core+BMM и локальные файлы в Git. Обязательный handoff, remote и restore evidence строго требуются после `migration.state: ready`; промежуточные bootstrap handoff также проверяются на целостность. Полные критерии — в [tooling/VERIFY.md](tooling/VERIFY.md).

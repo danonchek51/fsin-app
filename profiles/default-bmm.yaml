@@ -9,6 +9,9 @@ continuity:
   remote_name: "origin"
   evidence_path: null # set after a successful restore test
 
+migration:
+  state: "remote-pending" # remote-pending | runtime-pending | restore-pending | ready
+
 bmad_install:
   mode: "bootstrap-per-clone"
   installed_version: null

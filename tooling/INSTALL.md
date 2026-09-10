@@ -22,13 +22,13 @@ Private remote — обязательная часть этого минимал
 
 ## 3. Установите BMAD чисто
 
-Следуйте текущей официальной инструкции BMAD для выбранного инструмента/агента. Устанавливайте только modules профиля. После установки занесите фактическую версию в `bmad_install.installed_version`.
+Следуйте текущей официальной инструкции BMAD для выбранного инструмента/агента. Устанавливайте только modules профиля. После установки занесите фактическую версию в `bmad_install.installed_version`, зафиксируйте baseline runtime и только затем переведите `migration.state` в `restore-pending`.
 
 Не переносите или не редактируйте вручную installer-managed файлы. `bootstrap-per-clone` — единственный поддерживаемый install mode: runtime намеренно не попадает в Git и повторно создаётся на каждой машине.
 
 ## 4. Выполните INIT-001
 
-В новом чате выполните только `templates/INIT-001.md`: заполните устав и профиль, замените служебный `INIT-001` первым реальным work-item ID и задайте один начальный action в `control/NOW.yaml`. Затем создайте первый handoff и commit.
+В новом чате выполните только `templates/INIT-001.md`: заполните устав и профиль, но не заменяйте служебный `INIT-001` первым реальным work-item ID, пока `migration.state` не достигнет `ready`.
 
 ## 5. Проверьте
 
@@ -40,6 +40,6 @@ Private remote — обязательная часть этого минимал
 
 До начала реализации исправьте все `ERROR`. `WARNING` допустимы только если их причина и следующий action записаны в handoff.
 
-До первого handoff проведите restore test: в новом пустом clone или на другом аккаунте установите runtime по profile, откройте `START-NEW-CHAT.md` и заполните копию `evidence/CONTINUITY-RESTORE-TEMPLATE.md`. Укажите этот evidence-файл в `continuity.evidence_path`. Затем handoff commit должен быть отправлен в remote до post-commit проверки.
+Проведите restore test в новом пустом clone или на другом аккаунте: установите runtime по profile, откройте `START-NEW-CHAT.md` и заполните копию `evidence/CONTINUITY-RESTORE-TEMPLATE.md`. Укажите этот evidence-файл в `continuity.evidence_path`, переведите `migration.state` в `ready`, затем замените `INIT-001` одним реальным work item и создайте handoff. Handoff commit должен быть отправлен в remote до финальной post-commit проверки.
 
 Официальные BMAD-документы меняются вместе с installer, поэтому команда установки здесь намеренно не зашита. Актуальный маршрут установки находится в [официальной документации BMAD](https://docs.bmad-method.org/); после установки внесите фактическую версию в profile.

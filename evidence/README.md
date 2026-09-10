@@ -4,4 +4,4 @@
 
 Evidence не является вторым источником требований или состояния. У него должна быть ссылка на work item и способ повторной проверки. Секреты, персональные данные, большие build-артефакты и machine-local paths сюда не добавляются.
 
-После `INIT-001` обязателен один короткий record успешного restore test. Скопируйте `CONTINUITY-RESTORE-TEMPLATE.md` в новый файл, заполните его без маркеров `<…>` и укажите этот путь в `control/WORKSPACE-PROFILE.yaml:continuity.evidence_path`. Для каждого handoff post-commit validator дополнительно проверяет, что текущий `HEAD` уже присутствует на настроенном remote.
+До перевода `migration.state` в `ready` обязателен один короткий record успешного restore test. Скопируйте `CONTINUITY-RESTORE-TEMPLATE.md` в новый файл, заполните его без маркеров `<…>` и укажите этот путь в `control/WORKSPACE-PROFILE.yaml:continuity.evidence_path`. В состоянии `ready` post-commit validator дополнительно проверяет, что текущий `HEAD` уже присутствует на настроенном remote.
