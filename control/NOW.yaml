@@ -1,11 +1,11 @@
-# Тонкий диспетчер. До remote он ведёт только INIT-001.
+# Тонкий диспетчер. INIT-001 проходит проверяемые этапы миграции.
 schema_version: 1
 profile: control/WORKSPACE-PROFILE.yaml
-last_handoff: null
+last_handoff: handoffs/H-20260910T135424Z-INIT-001-RUNTIME.md
 
 active_work:
   id: INIT-001
-  dispatch_state: setup
+  dispatch_state: verification
   blocker: null
   resume_state: null
   source_memlog: null
@@ -17,30 +17,32 @@ active_work:
     - legacy/context/chat-1.png
 
 next_action:
-  id: init-001-connect-private-remote
-  kind: decision
+  id: init-001-verify-local-core-bmm-runtime
+  kind: verification
   workflow: null
-  title: "Подключить и проверить private Git remote для migration branch"
+  title: "Проверить локальный Core+BMM runtime перед независимым восстановлением"
   input_paths:
     - AGENTS.md
     - control/NOW.yaml
     - control/WORKSPACE-PROFILE.yaml
+    - control/STATE-MACHINE.md
     - docs/PROJECT-CHARTER.md
-    - templates/INIT-001.md
+    - tools/verify-workspace.ps1
   expected_outputs:
+    - _bmad/config.toml
     - control/WORKSPACE-PROFILE.yaml
     - control/NOW.yaml
-    - evidence/CONTINUITY-RESTORE-TEMPLATE.md
+    - handoffs/H-20260910T135424Z-INIT-001-RUNTIME.md
   done_when:
-    - "origin указывает на согласованный private repository."
-    - "migration branch и checkpoint доступны через fetch/push."
-    - "В profile записан результат проверки восстановления."
+    - "Локальный _bmad/config.toml содержит Core и BMM без GDS."
+    - "Installer-managed _bmad/ и .agents/ не versioned."
+    - "Проверка среды проходит перед restore test."
   forbidden_scope:
-    - "Не выводить требования, стек или приоритеты из одного снимка чата."
-    - "Не запускать product planning, research или implementation."
-    - "Не переносить секреты, локальные credentials или machine-local config."
+    - "Не начинать product workflow, перенос ОС, build или implementation."
+    - "Не менять source contracts или legacy evidence."
+    - "Не переносить секреты, credentials или machine-local config."
 
 recovery:
   on_missing_input: "Установить dispatch_state: blocked, записать blocker и сделать следующим action ask-owner; не выбирать путь из истории чата."
   on_conflicting_owners: "Установить dispatch_state: blocked, записать blocker, остановить выполнение и сначала выбрать одного владельца."
-  last_known_good_revision: "10259b0"
+  last_known_good_revision: "5764cc8cc62bee4c3b581a26c70a2817d6647885"
