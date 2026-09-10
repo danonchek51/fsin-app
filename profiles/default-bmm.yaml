@@ -1,0 +1,26 @@
+# Рекомендуемый старт для обычного продукта, изменения или исследования.
+workspace:
+  id: "<project-id>"
+  name: "<project-name>"
+  communication_language: "Russian"
+
+continuity:
+  method: "git-remote"
+  remote_name: "origin"
+  evidence_path: null # set after a successful restore test
+
+bmad_install:
+  mode: "bootstrap-per-clone"
+  installed_version: null
+  enabled_modules:
+    - core
+    - bmm
+  generated_directories_versioned: false
+
+delivery:
+  lane: "change"
+  source_contract_owner: "bmad-spec .memlog.md"
+  implementation_contract_owner: "bmm implementation-artifacts/spec-*.md"
+  queue_owner: "BMM sprint-status.yaml when created"
+
+extensions: { tea: false, cis: false, builder: false, loop: false, build_auto: false }

@@ -1,0 +1,43 @@
+# Единственный изменяемый профиль среды. Заполните до product work.
+schema_version: 1
+
+workspace:
+  id: "<project-id>"
+  name: "<project-name>"
+  communication_language: "Russian"
+
+codex:
+  global_guidance: "optional: ~/.codex/AGENTS.md"
+  project_guidance: "AGENTS.md"
+
+continuity:
+  method: "git-remote" # the only supported continuity method in this minimal template
+  remote_name: "origin"
+  evidence_path: null # required after INIT-001; a completed restore test record
+
+bmad_install:
+  mode: "bootstrap-per-clone" # the only supported install mode in this minimal template
+  installed_version: null
+  installer_version_policy: "record actual version after installation"
+  enabled_modules:
+    - core
+    - bmm
+  generated_directories_versioned: false
+
+delivery:
+  lane: "change" # change | bmm-project
+  source_contract_owner: "bmad-spec .memlog.md"
+  implementation_contract_owner: "bmm implementation-artifacts/spec-*.md"
+  queue_owner: "BMM sprint-status.yaml when created"
+
+extensions:
+  tea: false
+  cis: false
+  builder: false
+  loop: false
+  build_auto: false
+
+external_integrations: []
+
+# A profile change is a project decision: record why, migration implications,
+# and the version that performed it before changing these values.

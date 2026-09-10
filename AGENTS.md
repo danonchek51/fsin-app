@@ -1,24 +1,56 @@
+# Проектный контракт исполнения
+
+## Старт каждой сессии
+
+1. Прочитай `control/WORKSPACE-PROFILE.yaml`, `control/NOW.yaml`, `control/STATE-MACHINE.md` и `docs/PROJECT-CHARTER.md`.
+2. Прочитай последний handoff, только если на него указывает `NOW.yaml`.
+3. Открой только `next_action.input_paths` и контракты, на которые они ссылаются.
+4. Выполни ровно `next_action.id`. Не начинай соседний workflow, следующую фазу или новую задачу по собственной инициативе.
+5. Если входа недостаточно, owners конфликтуют или нужен выбор человека, не угадывай: установи `dispatch_state: blocked`, запиши `blocker` и точный `resume_state`, затем сделай следующим action явный `ask-owner` с одним вопросом.
+
+## Владение данными
+
+- `control/NOW.yaml` хранит только active work, pointers (`source_memlog` → `source_contract` → `implementation_contract`) и один action; не копируй в него requirements, lifecycle или backlog.
+- `bmad-spec` workspace владеет source contract: `.memlog.md` — журнал решений, `SPEC.md` и companions — производный контракт.
+- BMM implementation spec владеет реализационным lifecycle. При наличии source contract он содержит только ссылку на него, а не дубликат требований.
+- BMM `sprint-status.yaml` владеет очередью stories лишь в `bmm-project` lane.
+- `handoffs/` неизменяемы и помогают новому чату; при конфликте побеждают NOW и канонические BMAD artifacts.
+- `docs/` — подтверждённое долгоживущее знание; `legacy/` — исторические материалы, не активные instructions.
+
+## BMAD + SDD
+
+- Используй только delivery-lane, выбранный в `WORKSPACE-PROFILE.yaml`: `change` или `bmm-project`.
+- Не устанавливай и не запускай второй delivery module, Loop, Build Auto или внешний SDD engine без отдельной новой среды и записанного решения.
+- Не редактируй installer-managed `_bmad/` и generated `.agents/skills/` вручную.
+- Для bounded change сначала создай/обнови source contract через выбранный spec workflow, затем передай явный путь в build workflow. Не держи два активных specs для одной работы.
+
+## Контекст и handoff
+
+- Один чат обслуживает один session-sized action.
+- История чата — вспомогательная, не источник истины. Важный факт должен быть сохранён в каноническом файле.
+- Не сканируй всё дерево, все старые artifacts или весь внешний каталог без конкретной причины. Расширяй контекст только по ссылке либо чтобы снять известную неопределённость.
+
+## Навигация пользователя
+
+- Пользователь не обязан сам решать, нужен ли новый чат, какой workflow выбрать или какой файл читать. Сначала сверь `NOW.yaml`, профиль и routing; затем предложи следующий безопасный маршрут.
+- Не создавай новый чат из-за произвольного числа сообщений. Пока текущий action не завершён, продолжай в том же чате; не превращай мелкие уточнения, исправления и тесты внутри него в лишние handoff.
+- После завершённого action сам выбери режим. `Новый чат` обязателен при смене work item, workflow/фазы, главного contract или независимого набора входов, а также если продолжение потребовало бы опираться на историю этого чата. `Продолжить здесь` допустимо только для короткого прямого продолжения с теми же work item, contract и входами.
+- В конце завершённого action покажи пользователю короткую **навигационную сводку**: `готово` или `blocked`; ID и название следующего action; `режим: новый чат | продолжить здесь`; одну конкретную причину. При новом чате дай готовую фразу: `Прочитай control/START-NEW-CHAT.md и выполни текущий next_action.` Не говори «возможно, стоит открыть новый чат» без выбранного режима.
+- Не ориентируйся на произвольный числовой лимит токенов: он зависит от модели. Ориентируйся на границу работы и на то, восстанавливается ли следующий шаг только из канонических файлов.
+- Если новый module, extension или другой delivery lane действительно полезен, объясни зачем, какие artifacts он добавит и почему Core+BMM недостаточно. Не устанавливай его молча: material expansion требует отдельного решения и, при новом delivery engine, отдельной среды.
+
+## Завершение action
+
+1. Сохрани artifacts и проверяемые evidence.
+2. Обнови только владельца изменённого факта.
+3. Обнови `NOW.yaml`: корректный `dispatch_state`, `blocker: null` и `resume_state: null` вне блокера, один новый action. После `INIT-001` обязательно задай первый реальный `active_work.id`, а не оставляй служебный ID.
+4. Создай immutable handoff из `handoffs/TEMPLATE.md` и в том же изменении запиши его относительный путь в `control/NOW.yaml:last_handoff`.
+5. Убедись, что `handoff` называет ровно тот `next_action.id`, который теперь находится в NOW.
+6. Запусти pre-commit проверку: `tools/verify-workspace.ps1 -Phase precommit`.
+7. Зафиксируй передачу отдельным Git commit с marker handoff в сообщении.
+8. Отправь этот commit в настроенный private remote.
+9. Запусти post-commit проверку: `tools/verify-workspace.ps1`. Не начинай следующий action, пока она не завершится без ERROR.
+
 <!-- bmad:context -->
-
-# BMAD starter workspace
-
-This repository uses BMAD as its planning and delivery system. Planning and implementation artifacts live in `_bmad-output/`; durable human-maintained domain knowledge belongs in `docs/`. BMAD skills are available in `.agents/skills/`.
-
-## Workflow routing
-
-- Inspect the request, relevant code or configuration, and existing `_bmad-output/` artifacts first; choose the smallest sufficient BMAD path without asking the user to select a skill.
-- Use `bmad-help` only when the task and current artifacts do not establish a clear route.
-- For a new product or material capability, use the BMad Method in order: product brief or PRFAQ, PRD, UX when the experience is material, architecture, epics and stories, sprint planning, then build.
-- For a bounded change without accepted requirements or acceptance criteria, create or update a `bmad-spec` before implementation. Use an accepted spec or ready story as the basis for `bmad-build`.
-- For a feature, bug, or meaningful change, follow Research → Plan → Implement → Verify: investigate only the unknowns that matter, make a concrete plan, implement, and run proportionate verification. Skip ceremony for obvious low-risk mechanical edits.
-- Use `bmad-deep-recon` when an important decision needs current external evidence. Use Game Dev Studio only for game work, Test Architecture Enterprise only when test architecture is needed, and Builder only for creating or changing skills.
-- Do not use `bmad-loop-*` or `bmad-build-auto` unless the user explicitly requests them.
-
-## Source of truth and maintenance
-
-- Treat accepted BMAD artifacts as the source of truth. Do not duplicate their requirements, specs, or plans under `docs/`.
-- Keep `docs/` for long-lived domain knowledge, external constraints, and human-maintained references that are not BMAD planning artifacts.
-- Do not hand-edit installer-managed `_bmad/config.toml`; put durable project-wide overrides in `_bmad/custom/`.
-- Once application code, scripts, or CI exist, run `bmad-project-context` to refresh this file with verified commands, conventions, and observed pitfalls. Do not add guessed commands or a technology inventory.
-
+<!-- После установки BMAD запустите bmad-project-context, чтобы добавить сюда короткий проверенный блок: команды, conventions и трудно обнаруживаемые pitfalls конкретного проекта. -->
 <!-- /bmad:context -->

@@ -1,0 +1,42 @@
+# Тонкий диспетчер. Не дублирует requirements, lifecycle или story queue.
+schema_version: 1
+profile: control/WORKSPACE-PROFILE.yaml
+last_handoff: null
+
+active_work:
+  id: INIT-001
+  dispatch_state: setup # setup | planning | implementation | verification | blocked | closed
+  blocker: null
+  resume_state: null # required only when dispatch_state: blocked
+  source_memlog: null # bmad-spec decision record (.memlog.md)
+  source_contract: null
+  implementation_contract: null
+  queue_path: null
+  selected_story_id: null
+
+next_action:
+  id: init-001-capture-project-charter
+  kind: decision # decision | bmad-workflow | implementation | verification | ask-owner
+  workflow: null
+  title: "Зафиксировать цель, границы и профиль нового проекта"
+  input_paths:
+    - README.md
+    - control/WORKSPACE-PROFILE.yaml
+    - templates/INIT-001.md
+    - docs/PROJECT-CHARTER.md
+  expected_outputs:
+    - docs/PROJECT-CHARTER.md
+    - control/WORKSPACE-PROFILE.yaml
+    - control/NOW.yaml
+  done_when:
+    - "Заполнены цель, границы и критические неизвестные проекта"
+    - "Выбран один delivery lane и набор BMAD modules"
+    - "Следующий action имеет полный список входов и один ожидаемый результат"
+  forbidden_scope:
+    - "Не начинать product implementation"
+    - "Не подключать дополнительные модули или интеграции без решения"
+
+recovery:
+  on_missing_input: "Установить dispatch_state: blocked, записать blocker и сделать следующим action ask-owner; не выбирать путь из истории чата."
+  on_conflicting_owners: "Установить dispatch_state: blocked, записать blocker, остановить выполнение и сначала выбрать одного владельца."
+  last_known_good_revision: null

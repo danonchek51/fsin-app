@@ -1,8 +1,30 @@
+# Dependencies
 node_modules/
+
+# Secrets and machine-local configuration
 .env
 .env.*
 !.env.example
+*.local.json
+*.local.yaml
+*.local.yml
+*.local.toml
+
+# Generated caches and runtime data
+_bmad/render/
+.uv-cache/
+.tmp-uv-cache*/
+__pycache__/
+*.py[cod]
+
+# Default BMAD policy: install the runtime afresh on every clone.
+# The reproducible source of truth is control/WORKSPACE-PROFILE.yaml;
+# do not copy a previous project's generated skills or render output.
+_bmad/
+.agents/
+
+# OS/editor noise
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/
+.vscode/
