@@ -24,6 +24,11 @@
 - Не редактируй installer-managed `_bmad/` и generated `.agents/skills/` вручную.
 - Для bounded change сначала создай/обнови source contract через выбранный spec workflow, затем передай явный путь в build workflow. Не держи два активных specs для одной работы.
 
+## Защита continuity remote
+
+- При `migration.state: ready` подтверждённый `continuity.remote_name` — защищённая переносимость проекта. Product work не может объявить его устаревшим, неиспользуемым или недоверенным, заменить remote либо создать «чистую» Git-историю.
+- Legacy artifacts, старая история и задача продукта сами по себе не являются разрешением менять continuity. Нужен явный запрос владельца, который называет цель изменения и точный новый URL; до этого следующий шаг может быть только одним `ask-owner`, без commit, push или формулировок об отказе от `origin`.
+- Успешный pre-commit не завершает действие. После handoff нельзя начинать следующий action, пока handoff commit не отправлен в подтверждённый continuity remote и `postcommit` не завершился без ERROR.
 ## Контекст и handoff
 
 - Один чат обслуживает один session-sized action.

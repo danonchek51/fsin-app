@@ -1,7 +1,7 @@
 # Тонкий диспетчер. Bootstrap завершён; агент ждёт только одного решения владельца.
 schema_version: 1
 profile: control/WORKSPACE-PROFILE.yaml
-last_handoff: handoffs/H-20260910T140325Z-ONBOARD-001.md
+last_handoff: handoffs/H-20260910T164821Z-ONBOARD-001-CONTINUITY-GUARD.md
 
 active_work:
   id: ONBOARD-001
