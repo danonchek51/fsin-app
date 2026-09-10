@@ -543,13 +543,23 @@ if ((Test-Path -LiteralPath $gitDirectory) -and $null -ne $gitCommand) {
         }
         elseif ($isOperational -and $Phase -eq 'postcommit') {
             $headRevision = @(& git -C $script:rootPath rev-parse HEAD 2>$null) -join ''
-            $remoteRefs = @(& git -C $script:rootPath ls-remote $continuityRemoteName 2>$null)
-            $headOnRemote = $false
-            if (-not [string]::IsNullOrWhiteSpace($headRevision)) {
-                $headOnRemote = [regex]::IsMatch(($remoteRefs -join "`n"), '(?m)^' + [regex]::Escape($headRevision) + '\s')
+            $currentBranch = @(& git -C $script:rootPath branch --show-current 2>$null) -join ''
+            if ([string]::IsNullOrWhiteSpace($currentBranch)) {
+                Add-CheckError('Cannot determine the current branch. Postcommit validation requires a named branch that is pushed to the continuity remote.')
             }
-            if (-not $headOnRemote) {
-                Add-CheckError('The continuity remote does not contain the current HEAD. Push the handoff commit before postcommit validation.')
+            elseif (-not [string]::IsNullOrWhiteSpace($headRevision)) {
+                $expectedRemoteRef = "refs/heads/$currentBranch"
+                $remoteBranchRefs = @(& git -C $script:rootPath ls-remote --heads $continuityRemoteName $expectedRemoteRef 2>$null)
+                $headOnCurrentRemoteBranch = [regex]::IsMatch(
+                    ($remoteBranchRefs -join "`n"),
+                    '(?m)^' + [regex]::Escape($headRevision) + '\s+' + [regex]::Escape($expectedRemoteRef) + '$'
+                )
+                if (-not $headOnCurrentRemoteBranch) {
+                    Add-CheckError("The continuity remote branch $expectedRemoteRef does not contain the current HEAD. Push the handoff commit to the current branch before postcommit validation.")
+                }
+            }
+            else {
+                Add-CheckError('Cannot determine the current HEAD for postcommit validation.')
             }
         }
     }
