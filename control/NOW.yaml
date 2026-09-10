@@ -1,13 +1,13 @@
-# Тонкий диспетчер. INIT-001 проходит проверяемые этапы миграции.
+# Тонкий диспетчер. Bootstrap завершён; агент ждёт только одного решения владельца.
 schema_version: 1
 profile: control/WORKSPACE-PROFILE.yaml
-last_handoff: handoffs/H-20260910T135424Z-INIT-001-RESTORE.md
+last_handoff: handoffs/H-20260910T140325Z-ONBOARD-001.md
 
 active_work:
-  id: INIT-001
-  dispatch_state: verification
-  blocker: null
-  resume_state: null
+  id: ONBOARD-001
+  dispatch_state: blocked
+  blocker: "Нужно решение владельца: назовите одну цель FSIN-app, пользователя и первый наблюдаемый результат, который будет считаться успехом."
+  resume_state: planning
   source_memlog: null
   source_contract: null
   implementation_contract: null
@@ -17,32 +17,31 @@ active_work:
     - legacy/context/chat-1.png
 
 next_action:
-  id: init-001-run-clean-clone-restore
-  kind: verification
+  id: onboard-001-confirm-product-brief
+  kind: ask-owner
   workflow: null
-  title: "Выполнить независимое чистое восстановление Core+BMM среды"
+  title: "Подтвердить одну исходную цель FSIN-app"
   input_paths:
     - AGENTS.md
     - control/NOW.yaml
     - control/WORKSPACE-PROFILE.yaml
     - control/STATE-MACHINE.md
     - docs/PROJECT-CHARTER.md
-    - tools/verify-workspace.ps1
-  expected_outputs:
     - evidence/CONTINUITY-RESTORE-2026-09-10.md
-    - control/WORKSPACE-PROFILE.yaml
+    - legacy/context/chat-1.png
+  expected_outputs:
     - control/NOW.yaml
-    - handoffs/H-20260910T135424Z-INIT-001-RESTORE.md
+    - docs/PROJECT-CHARTER.md
+    - handoffs/
   done_when:
-    - "Создан независимый clone migration branch."
-    - "В clone заново установлен Core+BMM."
-    - "Restore test зафиксирован как pass в evidence."
+    - "Владелец назвал одну цель, пользователя и наблюдаемый результат."
+    - "Ответ сохранён в каноническом artifact до planning или implementation."
   forbidden_scope:
-    - "Не начинать product workflow, build или implementation."
+    - "Не выводить требования, стек или приоритеты из одного снимка чата."
+    - "Не запускать product planning, research или implementation."
     - "Не переносить секреты, credentials или machine-local config."
-    - "Не изменять legacy artifacts во время restore test."
 
 recovery:
   on_missing_input: "Установить dispatch_state: blocked, записать blocker и сделать следующим action ask-owner; не выбирать путь из истории чата."
   on_conflicting_owners: "Установить dispatch_state: blocked, записать blocker, остановить выполнение и сначала выбрать одного владельца."
-  last_known_good_revision: "008a1aab8bc3063d4e9e037fecfad8211a356bae"
+  last_known_good_revision: "1c49ca086dbceb16a851443741d7ef174bbad46e"

@@ -1,11 +1,11 @@
-# Единственный изменяемый профиль среды. INIT-001 ещё не завершён.
+# Единственный изменяемый профиль среды. Bootstrap проверен и закрыт.
 schema_version: 1
 
 workspace:
   id: "fsin-app"
   name: "FSIN app"
   communication_language: "Russian"
-  migration_mode: true
+  migration_mode: false
 
 codex:
   global_guidance: "optional: ~/.codex/AGENTS.md"
@@ -14,7 +14,7 @@ codex:
 continuity:
   method: "git-remote"
   remote_name: "origin"
-  evidence_path: null
+  evidence_path: "evidence/CONTINUITY-RESTORE-2026-09-10.md"
 
 bmad_install:
   mode: "bootstrap-per-clone"
@@ -41,7 +41,7 @@ extensions:
 external_integrations: []
 
 migration:
-  state: "restore-pending"
+  state: "ready"
   migration_branch: "workspace/core-bmm-migration-20260910"
   legacy_checkpoint: "10259b0"
   legacy_runtime: "Core+BMM+BMB+CIS+TEA+Loop+GDS; not an active target runtime"
