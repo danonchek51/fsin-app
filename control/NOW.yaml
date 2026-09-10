@@ -1,7 +1,7 @@
 # Тонкий диспетчер. INIT-001 проходит проверяемые этапы миграции.
 schema_version: 1
 profile: control/WORKSPACE-PROFILE.yaml
-last_handoff: handoffs/H-20260910T135424Z-INIT-001-RUNTIME.md
+last_handoff: handoffs/H-20260910T135424Z-INIT-001-RESTORE.md
 
 active_work:
   id: INIT-001
@@ -17,10 +17,10 @@ active_work:
     - legacy/context/chat-1.png
 
 next_action:
-  id: init-001-verify-local-core-bmm-runtime
+  id: init-001-run-clean-clone-restore
   kind: verification
   workflow: null
-  title: "Проверить локальный Core+BMM runtime перед независимым восстановлением"
+  title: "Выполнить независимое чистое восстановление Core+BMM среды"
   input_paths:
     - AGENTS.md
     - control/NOW.yaml
@@ -29,20 +29,20 @@ next_action:
     - docs/PROJECT-CHARTER.md
     - tools/verify-workspace.ps1
   expected_outputs:
-    - _bmad/config.toml
+    - evidence/CONTINUITY-RESTORE-2026-09-10.md
     - control/WORKSPACE-PROFILE.yaml
     - control/NOW.yaml
-    - handoffs/H-20260910T135424Z-INIT-001-RUNTIME.md
+    - handoffs/H-20260910T135424Z-INIT-001-RESTORE.md
   done_when:
-    - "Локальный _bmad/config.toml содержит Core и BMM без GDS."
-    - "Installer-managed _bmad/ и .agents/ не versioned."
-    - "Проверка среды проходит перед restore test."
+    - "Создан независимый clone migration branch."
+    - "В clone заново установлен Core+BMM."
+    - "Restore test зафиксирован как pass в evidence."
   forbidden_scope:
-    - "Не начинать product workflow, перенос ОС, build или implementation."
-    - "Не менять source contracts или legacy evidence."
+    - "Не начинать product workflow, build или implementation."
     - "Не переносить секреты, credentials или machine-local config."
+    - "Не изменять legacy artifacts во время restore test."
 
 recovery:
   on_missing_input: "Установить dispatch_state: blocked, записать blocker и сделать следующим action ask-owner; не выбирать путь из истории чата."
   on_conflicting_owners: "Установить dispatch_state: blocked, записать blocker, остановить выполнение и сначала выбрать одного владельца."
-  last_known_good_revision: "5764cc8cc62bee4c3b581a26c70a2817d6647885"
+  last_known_good_revision: "008a1aab8bc3063d4e9e037fecfad8211a356bae"

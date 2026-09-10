@@ -41,7 +41,7 @@ extensions:
 external_integrations: []
 
 migration:
-  state: "runtime-pending"
+  state: "restore-pending"
   migration_branch: "workspace/core-bmm-migration-20260910"
   legacy_checkpoint: "10259b0"
   legacy_runtime: "Core+BMM+BMB+CIS+TEA+Loop+GDS; not an active target runtime"
