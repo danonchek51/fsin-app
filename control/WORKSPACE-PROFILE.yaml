@@ -1,31 +1,32 @@
-# Единственный изменяемый профиль среды. Заполните до product work.
+# Единственный изменяемый профиль среды. INIT-001 ещё не завершён.
 schema_version: 1
 
 workspace:
-  id: "<project-id>"
-  name: "<project-name>"
+  id: "fsin-app"
+  name: "FSIN app"
   communication_language: "Russian"
+  migration_mode: true
 
 codex:
   global_guidance: "optional: ~/.codex/AGENTS.md"
   project_guidance: "AGENTS.md"
 
 continuity:
-  method: "git-remote" # the only supported continuity method in this minimal template
+  method: "git-remote"
   remote_name: "origin"
-  evidence_path: null # required after INIT-001; a completed restore test record
+  evidence_path: null
 
 bmad_install:
-  mode: "bootstrap-per-clone" # the only supported install mode in this minimal template
+  mode: "bootstrap-per-clone"
   installed_version: null
-  installer_version_policy: "record actual version after installation"
+  installer_version_policy: "record actual version after a fresh Core+BMM installation"
   enabled_modules:
     - core
     - bmm
   generated_directories_versioned: false
 
 delivery:
-  lane: "change" # change | bmm-project
+  lane: "change"
   source_contract_owner: "bmad-spec .memlog.md"
   implementation_contract_owner: "bmm implementation-artifacts/spec-*.md"
   queue_owner: "BMM sprint-status.yaml when created"
@@ -39,5 +40,9 @@ extensions:
 
 external_integrations: []
 
-# A profile change is a project decision: record why, migration implications,
-# and the version that performed it before changing these values.
+migration:
+  state: "remote-pending"
+  migration_branch: "workspace/core-bmm-migration-20260910"
+  legacy_checkpoint: "10259b0"
+  legacy_runtime: "Core+BMM+BMB+CIS+TEA+Loop+GDS; not an active target runtime"
+  legacy_entrypoint: "legacy/context/chat-1.png"
