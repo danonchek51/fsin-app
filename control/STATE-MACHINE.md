@@ -1,6 +1,6 @@
 # Состояния диспетчера
 
-`active_work.dispatch_state` описывает только состояние **передачи и следующего действия**. Он не заменяет lifecycle нативного BMAD contract и не копирует его status.
+`active_work.dispatch_state` описывает только состояние **передачи и следующего действия**. Он не заменяет lifecycle нативного BMAD contract и не копирует его status. Готовность самой среды хранится отдельно в `migration.state`; нельзя выводить её из наличия handoff или из длины истории чата.
 
 | State | Значение | Допустимый следующий шаг |
 | --- | --- | --- |
@@ -18,3 +18,15 @@
 - В остальных состояниях `blocker: null` и `resume_state: null`.
 - `bmad-build` требует `source_contract`; `implementation` action требует и `source_contract`, и `implementation_contract`.
 - После каждого законченного action обновляются state, один `next_action`, handoff и `NOW.last_handoff`.
+
+## Bootstrap готовности
+
+| `migration.state` | Смысл | Что допускается дальше |
+| --- | --- | --- |
+| `remote-pending` | Есть локальная копия, но private remote ещё не проверен | Устав, профиль и подключение/проверка private remote |
+| `runtime-pending` | Remote содержит исходный baseline, но чистый Core+BMM ещё не установлен и не зафиксирован | Удалить legacy runtime из migration branch, установить Core+BMM, записать версию |
+| `restore-pending` | Core+BMM установлен и отправлен, но независимый clone ещё не проверен | Clean-clone restore test и evidence |
+| `ready` | Remote, Core+BMM и restore evidence подтверждены | Заменить `INIT-001` на один реальный work item |
+
+- Промежуточный handoff внутри `INIT-001` допустим и не переводит среду в `ready`.
+- Только при `migration.state: ready` `INIT-001` обязан быть заменён реальным work item.

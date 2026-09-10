@@ -43,7 +43,7 @@
 
 1. Сохрани artifacts и проверяемые evidence.
 2. Обнови только владельца изменённого факта.
-3. Обнови `NOW.yaml`: корректный `dispatch_state`, `blocker: null` и `resume_state: null` вне блокера, один новый action. После `INIT-001` обязательно задай первый реальный `active_work.id`, а не оставляй служебный ID.
+3. Обнови `NOW.yaml`: корректный `dispatch_state`, `blocker: null` и `resume_state: null` вне блокера, один новый action. Во время bootstrap `INIT-001` может иметь промежуточные handoff; замени его первым реальным `active_work.id` только при `migration.state: ready`.
 4. Создай immutable handoff из `handoffs/TEMPLATE.md` и в том же изменении запиши его относительный путь в `control/NOW.yaml:last_handoff`.
 5. Убедись, что `handoff` называет ровно тот `next_action.id`, который теперь находится в NOW.
 6. Запусти pre-commit проверку: `tools/verify-workspace.ps1 -Phase precommit`.

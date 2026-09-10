@@ -24,6 +24,9 @@ $sourceMemlog = $null
 $sourceContract = $null
 $implementationContract = $null
 $lastHandoff = $null
+$migrationState = $null
+$requiresRemote = $false
+$requiresInstalledRuntime = $false
 $isOperational = $false
 $handoffMarker = $null
 $handoffRelativePath = $null
@@ -182,9 +185,16 @@ if ((Test-Path -LiteralPath $nowPath -PathType Leaf) -and (Test-Path -LiteralPat
     if ($dispatchState -notin @('setup', 'planning', 'implementation', 'verification', 'blocked', 'closed')) {
         Add-CheckError("Unknown or missing active_work.dispatch_state: $dispatchState")
     }
-    $isOperational = -not (($activeId -eq 'INIT-001') -and ($dispatchState -eq 'setup') -and ([string]::IsNullOrWhiteSpace($lastHandoff) -or $lastHandoff -eq 'null'))
+    $migrationBlock = Get-YamlRootBlock $profile 'migration'
+    $migrationState = Get-YamlScalar $migrationBlock 'state'
+    if ($migrationState -notin @('remote-pending', 'runtime-pending', 'restore-pending', 'ready')) {
+        Add-CheckError("Unknown or missing migration.state: $migrationState")
+    }
+    $requiresRemote = $migrationState -in @('runtime-pending', 'restore-pending', 'ready')
+    $requiresInstalledRuntime = $migrationState -in @('restore-pending', 'ready')
+    $isOperational = $migrationState -eq 'ready'
     if ($isOperational -and $activeId -eq 'INIT-001') {
-        Add-CheckError('INIT-001 is complete but active_work.id was not replaced with a real work-item ID.')
+        Add-CheckError('migration.state is ready but active_work.id was not replaced with a real work-item ID.')
     }
 
     $nextMatches = [regex]::Matches($now, '(?m)^next_action:\s*$')
@@ -273,6 +283,9 @@ if ((Test-Path -LiteralPath $nowPath -PathType Leaf) -and (Test-Path -LiteralPat
     $bmadBlock = Get-YamlRootBlock $profile 'bmad_install'
     $deliveryBlock = Get-YamlRootBlock $profile 'delivery'
     $continuityBlock = Get-YamlRootBlock $profile 'continuity'
+    $continuityMethod = Get-YamlScalar $continuityBlock 'method'
+    $continuityRemoteName = Get-YamlScalar $continuityBlock 'remote_name'
+    $continuityEvidencePath = Get-YamlScalar $continuityBlock 'evidence_path'
     $lane = Get-YamlScalar $deliveryBlock 'lane'
     if ($lane -notin @('change', 'bmm-project')) {
         Add-CheckError("Unknown or unsupported delivery lane: $lane")
@@ -423,16 +436,59 @@ if ((Test-Path -LiteralPath $nowPath -PathType Leaf) -and (Test-Path -LiteralPat
         }
     }
 
+    if (-not $isOperational -and -not [string]::IsNullOrWhiteSpace($lastHandoff) -and $lastHandoff -ne 'null') {
+        $handoffPath = Resolve-WorkspacePath $lastHandoff 'NOW.last_handoff' $true
+        if ($null -ne $handoffPath -and (Test-Path -LiteralPath $handoffPath -PathType Leaf)) {
+            $handoffRelativePath = $lastHandoff.Replace('\', '/')
+            if (-not $handoffRelativePath.StartsWith('handoffs/', [System.StringComparison]::OrdinalIgnoreCase) -or $handoffRelativePath -eq 'handoffs/TEMPLATE.md') {
+                Add-CheckError('NOW.last_handoff must point to a concrete file under handoffs/, not its template.')
+            }
+            $handoffText = Get-Content -LiteralPath $handoffPath -Raw
+            if ($handoffText -match '<[^>]+>') {
+                Add-CheckError('The last handoff still contains unfilled placeholders.')
+            }
+            if (-not [string]::IsNullOrWhiteSpace($nextActionId)) {
+                $expectedIdPattern = '(?m)^-\s+\*\*ID:\*\*\s*' + [regex]::Escape($nextActionId) + '\s*$'
+                if (-not [regex]::IsMatch($handoffText, $expectedIdPattern)) {
+                    Add-CheckError('The last handoff does not name the same next_action.id as NOW.yaml.')
+                }
+            }
+            $markerMatch = [regex]::Match($handoffText, '(?m)^-\s+\*\*Commit marker:\*\*\s*(?<marker>[^\r\n]+)')
+            if (-not $markerMatch.Success -or $markerMatch.Groups['marker'].Value.Trim() -match '^<') {
+                Add-CheckError('The last handoff is missing a concrete Commit marker.')
+            }
+            else {
+                $handoffMarker = $markerMatch.Groups['marker'].Value.Trim().Trim('`').Trim('"').Trim("'")
+            }
+        }
+    }
+
+    if ($requiresRemote) {
+        if ($continuityMethod -ne 'git-remote') {
+            Add-CheckError("Unknown or missing continuity.method: $continuityMethod")
+        }
+        elseif ([string]::IsNullOrWhiteSpace($continuityRemoteName) -or $continuityRemoteName -eq 'null') {
+            Add-CheckError('continuity.method git-remote requires continuity.remote_name.')
+        }
+    }
+
+    if ($requiresInstalledRuntime) {
+        $installedVersion = Get-YamlScalar $bmadBlock 'installed_version'
+        if ([string]::IsNullOrWhiteSpace($installedVersion) -or $installedVersion -eq 'null') {
+            Add-CheckError('A restore-pending or ready workspace must record bmad_install.installed_version.')
+        }
+    }
+
     $installedConfig = Join-Path $script:rootPath '_bmad/config.toml'
-    if ($isOperational -and -not (Test-Path -LiteralPath $installedConfig -PathType Leaf)) {
-        Add-CheckError('An operational workspace requires installed _bmad/config.toml.')
+    if ($requiresInstalledRuntime -and -not (Test-Path -LiteralPath $installedConfig -PathType Leaf)) {
+        Add-CheckError('A restore-pending or ready workspace requires installed _bmad/config.toml.')
     }
     elseif (Test-Path -LiteralPath $installedConfig -PathType Leaf) {
         $installedText = Get-Content -LiteralPath $installedConfig -Raw
-        if ($isOperational -and -not [regex]::IsMatch($installedText, '(?m)^\[core\]')) {
+        if ($requiresInstalledRuntime -and -not [regex]::IsMatch($installedText, '(?m)^\[core\]')) {
             Add-CheckError('Installed _bmad/config.toml is missing the core section.')
         }
-        if ($isOperational -and -not (Test-TomlModuleEnabled $installedText 'bmm')) {
+        if ($requiresInstalledRuntime -and -not (Test-TomlModuleEnabled $installedText 'bmm')) {
             Add-CheckError('Installed _bmad/config.toml does not enable BMM.')
         }
         if (Test-TomlModuleEnabled $installedText 'gds') {
@@ -471,16 +527,21 @@ if ((Test-Path -LiteralPath $gitDirectory) -and $null -ne $gitCommand) {
     else {
         $trackedRuntime = @(& git -C $script:rootPath ls-files 2>$null | Where-Object { $_ -match '^(_bmad|\.agents)/' })
         if ($trackedRuntime.Count -gt 0) {
-            Add-CheckError('bootstrap-per-clone mode versions installer-managed _bmad/ or .agents/.')
+            if ($migrationState -eq 'remote-pending') {
+                Add-CheckWarning('Legacy installer-managed _bmad/ or .agents/ remain versioned during remote-pending bootstrap.')
+            }
+            else {
+                Add-CheckError('bootstrap-per-clone mode versions installer-managed _bmad/ or .agents/.')
+            }
         }
     }
 
-    if ($isOperational -and $continuityMethod -eq 'git-remote' -and -not [string]::IsNullOrWhiteSpace($continuityRemoteName)) {
+    if ($requiresRemote -and $continuityMethod -eq 'git-remote' -and -not [string]::IsNullOrWhiteSpace($continuityRemoteName)) {
         $remoteUrl = @(& git -C $script:rootPath remote get-url $continuityRemoteName 2>$null)
         if ($remoteUrl.Count -eq 0) {
             Add-CheckError("Configured continuity remote is unavailable: $continuityRemoteName")
         }
-        elseif ($Phase -eq 'postcommit') {
+        elseif ($isOperational -and $Phase -eq 'postcommit') {
             $headRevision = @(& git -C $script:rootPath rev-parse HEAD 2>$null) -join ''
             $remoteRefs = @(& git -C $script:rootPath ls-remote $continuityRemoteName 2>$null)
             $headOnRemote = $false

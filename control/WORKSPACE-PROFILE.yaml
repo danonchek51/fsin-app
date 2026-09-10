@@ -18,7 +18,7 @@ continuity:
 
 bmad_install:
   mode: "bootstrap-per-clone"
-  installed_version: null
+  installed_version: "6.12.0"
   installer_version_policy: "record actual version after a fresh Core+BMM installation"
   enabled_modules:
     - core

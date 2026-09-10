@@ -1,29 +1,42 @@
-# INIT-001 — переносимая среда для существующего проекта
+# INIT-001 — запуск нового проекта
 
-## Цель
+Это единственный action, который существует в чистой копии шаблона. Его цель — не начать реализацию, а создать минимальный, проверяемый контекст для следующего чата.
 
-Сначала сделать migration-ветку восстанавливаемой между чистыми чатами,
-аккаунтами и компьютерами. Это действие не принимает продуктовые решения и
-не продолжает старую работу автоматически.
+Начните так: `Выполни INIT-001 по шаблону. Сам предложи безопасный маршрут и задавай мне только решения, которые нельзя безопасно вывести из проекта.` Агент обязан объяснить выбор lane и в конце дать навигационную сводку, а не ожидать, что вы сами догадаетесь о следующем чате.
 
-## Единственный маршрут до завершения INIT
+## Входы
 
-1. Выполни только `control/NOW.yaml:next_action`.
-2. Подключи согласованный private Git remote как `origin`, отправь migration
-   branch и checkpoint в remote.
-3. Проведи восстановление в чистом clone и сохрани результат в evidence.
-4. Только затем закрой `INIT-001`, установи свежий Core+BMM runtime и выбери
-   один реальный work item отдельным action.
+- `README.md`
+- `docs/PROJECT-CHARTER.md`
+- `control/WORKSPACE-PROFILE.yaml`
+- `control/ROUTING.md`
 
-## Правила
+## Что сделать
 
-- Не читай весь legacy-репозиторий: открывай только evidence, на которое
-  указывает `docs/PROJECT-CHARTER.md`, и только после соответствующего action.
-- Не считай старые specs, brainstorming, screenshots или чат продуктовым
-  решением без явного подтверждения владельца.
-- Пока private remote не подтверждён, не запускай `bmad-spec`, `bmad-build`,
-  sprint planning, implementation, importer или product research.
-- Не переноси локальные секреты, credentials, vault, raw export,
-  machine-local config, chat sessions или installer-managed runtime.
-- Если URL или доступ к private remote отсутствует, задай владельцу ровно
-  один вопрос: какой private remote использовать как `origin`?
+1. Заполните `docs/PROJECT-CHARTER.md`: одну проблему, проверяемый результат, границы, ограничения и критерии приёмки.
+2. Выберите ровно один delivery lane:
+   - `change` — ограниченное изменение, исследование, документ или bug;
+   - `bmm-project` — продукт, который будет проходить planning, epics/stories и sprint queue.
+3. Заполните `control/WORKSPACE-PROFILE.yaml`: ID, название, язык, выбранные modules и lane. Оставьте `migration.state: remote-pending`.
+4. Подключите private Git remote `origin`, отправьте в него базовый commit шаблона и убедитесь, что второй аккаунт/компьютер действительно имеет к нему доступ. Затем переведите `migration.state` в `runtime-pending`. Этот минимальный шаблон намеренно не поддерживает альтернативный transport: без доступного remote не начинайте product work.
+5. Установите свежие только Core+BMM, запишите фактическую версию BMAD и убедитесь, что generated `_bmad/` и `.agents/` не versioned. Зафиксируйте и отправьте это изменение, затем установите `migration.state: restore-pending`.
+6. Проведите restore test в независимом clone/на втором аккаунте. Скопируйте `evidence/CONTINUITY-RESTORE-TEMPLATE.md` в заполненный evidence-файл, запишите его путь в `continuity.evidence_path` и установите `migration.state: ready`.
+7. Не включайте extension «на всякий случай». Для каждой нужной extension запишите пользу, владельца её artifacts и последствия для output paths.
+8. Только теперь завершите служебный work item: замените `active_work.id: INIT-001` на первый реальный ID (например, `WORK-001`), оставьте `blocker: null` и `resume_state: null`, затем замените `next_action` одним конкретным действием:
+   - для `change`: создать или уточнить source contract через выбранный spec workflow;
+   - для `bmm-project`: выполнить следующий planning action, который формирует продуктовый contract.
+9. После каждого законченного bootstrap action создайте handoff по `handoffs/TEMPLATE.md`, запишите его путь в `NOW.last_handoff`, выполните `tools/verify-workspace.ps1 -Phase precommit`, сделайте отдельный handoff commit с его marker и отправьте его в `origin`. Только после успешной post-commit проверки в состоянии `ready` новый чат может продолжать product work.
+
+## Done when
+
+- В уставе нет существенных маркеров `<…>`.
+- В профиле выбран один lane Core+BMM и нет второго delivery module.
+- `migration.state: ready`; зафиксирована версия BMAD, есть заполненный restore-test evidence, а handoff commit отправлен в доступный private remote.
+- `NOW.yaml` указывает только на один следующий action с существующими `input_paths`.
+- Новый чистый чат может начать работу, прочитав только файлы из `control/START-NEW-CHAT.md`.
+
+## Не делать
+
+- Не переносить `_bmad/`, `.agents/`, render-cache, локальные конфиги или transcript старого проекта.
+- Не создавать параллельные `SPEC`, `PLAN`, `TASKS` и backlog, если соответствующий BMAD artifact уже является владельцем факта.
+- Не реализовывать продуктовую функцию до принятия устава и профиля.
