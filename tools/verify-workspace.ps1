@@ -539,12 +539,17 @@ if ((Test-Path -LiteralPath $gitDirectory) -and $null -ne $gitCommand) {
             elseif (-not [string]::IsNullOrWhiteSpace($headRevision)) {
                 $expectedRemoteRef = "refs/heads/$currentBranch"
                 $remoteBranchRefs = @(& git -C $script:rootPath ls-remote --heads $continuityRemoteName $expectedRemoteRef 2>$null)
-                $headOnCurrentRemoteBranch = [regex]::IsMatch(
-                    ($remoteBranchRefs -join "`n"),
-                    '(?m)^' + [regex]::Escape($headRevision) + '\s+' + [regex]::Escape($expectedRemoteRef) + '$'
-                )
-                if (-not $headOnCurrentRemoteBranch) {
-                    Add-CheckError("The continuity remote branch $expectedRemoteRef does not contain the current HEAD. Push the current commit to the current branch before postcommit validation.")
+                if ($LASTEXITCODE -ne 0) {
+                    Add-CheckError("Cannot verify continuity remote branch $expectedRemoteRef because Git could not reach or authenticate to $continuityRemoteName. This is not evidence of an unpushed commit: do not change the remote, URL or history. Restore network/authentication and rerun postcommit.")
+                }
+                else {
+                    $headOnCurrentRemoteBranch = [regex]::IsMatch(
+                        ($remoteBranchRefs -join "`n"),
+                        '(?m)^' + [regex]::Escape($headRevision) + '\s+' + [regex]::Escape($expectedRemoteRef) + '$'
+                    )
+                    if (-not $headOnCurrentRemoteBranch) {
+                        Add-CheckError("The continuity remote branch $expectedRemoteRef does not contain the current HEAD. Push the current commit to the current branch before postcommit validation.")
+                    }
                 }
             }
             else {

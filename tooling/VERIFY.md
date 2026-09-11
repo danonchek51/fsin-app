@@ -22,7 +22,7 @@
 
 До любого долговечного commit запустите `./tools/verify-workspace.ps1 -Phase precommit`: он проверяет structure, paths, profile и существующий checkpoint, но ещё не требует чистое дерево или отправленный HEAD.
 
-После обычного commit и push в подтверждённый remote запустите `./tools/verify-workspace.ps1 -Phase postcommit` (это также режим по умолчанию). Он требует чистое дерево и присутствие текущего HEAD на remote, но не требует новый handoff ради обычной работы.
+После обычного commit и push в подтверждённый remote запустите `./tools/verify-workspace.ps1 -Phase postcommit` (это также режим по умолчанию). Он требует чистое дерево и присутствие текущего HEAD на remote, но не требует новый handoff ради обычной работы. Если Git не может проверить remote из-за сети или авторизации, validator сообщает именно это: не меняйте remote и не повторяйте push вслепую; восстановите доступ и запустите postcommit повторно.
 
 Если создаётся настоящий handoff, поместите handoff и обновлённый `NOW.last_handoff` в один commit с его marker, затем отправьте его и запустите тот же postcommit. Он проверит этот checkpoint commit исторически; дальнейшие обычные commits в том же чате допустимы.
 

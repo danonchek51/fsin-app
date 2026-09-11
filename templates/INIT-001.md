@@ -32,7 +32,7 @@
 
 - В уставе нет существенных маркеров `<…>`.
 - В профиле выбран один lane Core+BMM и нет второго delivery module.
-- `migration.state: ready`; зафиксирована версия BMAD, есть заполненный restore-test evidence, а handoff commit отправлен в доступный private remote.
+- `migration.state: ready`; зафиксирована версия BMAD, есть заполненный restore-test evidence, а один первый handoff checkpoint отправлен в доступный private remote. Это milestone bootstrap, а не требование handoff после каждого action.
 - `NOW.yaml` указывает только на один следующий action с существующими `input_paths`.
 - Новый чистый чат может начать работу, прочитав только файлы из `control/START-NEW-CHAT.md`.
 
