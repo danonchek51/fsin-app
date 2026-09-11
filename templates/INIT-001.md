@@ -26,7 +26,7 @@
 8. Только теперь завершите служебный work item: замените `active_work.id: INIT-001` на первый реальный ID (например, `WORK-001`), оставьте `blocker: null` и `resume_state: null`, затем замените `next_action` одним конкретным действием:
    - для `change`: создать или уточнить source contract через выбранный spec workflow;
    - для `bmm-project`: выполнить следующий planning action, который формирует продуктовый contract.
-9. После каждого законченного bootstrap action создайте handoff по `handoffs/TEMPLATE.md`, запишите его путь в `NOW.last_handoff`, выполните `tools/verify-workspace.ps1 -Phase precommit`, сделайте отдельный handoff commit с его marker и отправьте его в `origin`. Только после успешной post-commit проверки в состоянии `ready` новый чат может продолжать product work.
+9. Не создавайте handoff после каждого bootstrap action. Сохраняйте обычные durable changes через precommit → commit → push → postcommit в том же чате. Создайте первый handoff по `handoffs/TEMPLATE.md` только на реальной границе передачи, milestone или паузе; запишите его путь в `NOW.last_handoff`, сделайте отдельный handoff commit с marker и отправьте его в `origin`. В состоянии `ready` новый чат может продолжать product work только после успешного postcommit и при наличии переносимого checkpoint.
 
 ## Done when
 

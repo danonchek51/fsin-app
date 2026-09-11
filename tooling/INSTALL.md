@@ -38,8 +38,8 @@ Private remote — обязательная часть этого минимал
 ./tools/verify-workspace.ps1
 ```
 
-До начала реализации исправьте все `ERROR`. `WARNING` допустимы только если их причина и следующий action записаны в handoff.
+До начала реализации исправьте все `ERROR`. `WARNING` допустимы только если их причина понятна и не скрывает риск для текущего action.
 
-Проведите restore test в новом пустом clone или на другом аккаунте: установите runtime по profile, откройте `START-NEW-CHAT.md` и заполните копию `evidence/CONTINUITY-RESTORE-TEMPLATE.md`. Укажите этот evidence-файл в `continuity.evidence_path`, переведите `migration.state` в `ready`, затем замените `INIT-001` одним реальным work item и создайте handoff. Handoff commit должен быть отправлен в remote до финальной post-commit проверки.
+Проведите restore test в новом пустом clone или на другом аккаунте: установите runtime по profile, откройте `START-NEW-CHAT.md` и заполните копию `evidence/CONTINUITY-RESTORE-TEMPLATE.md`. Укажите этот evidence-файл в `continuity.evidence_path`, переведите `migration.state` в `ready`, затем замените `INIT-001` одним реальным work item. Создайте первый handoff только когда нужен переносимый checkpoint для нового чата, milestone или паузы; его commit должен быть отправлен в remote до финальной postcommit-проверки.
 
 Официальные BMAD-документы меняются вместе с installer, поэтому команда установки здесь намеренно не зашита. Актуальный маршрут установки находится в [официальной документации BMAD](https://docs.bmad-method.org/); после установки внесите фактическую версию в profile.

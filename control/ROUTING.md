@@ -6,19 +6,23 @@
 
 | Lane | Когда подходит | Владелец состояния |
 | --- | --- | --- |
-| `change` | Ограниченное изменение, исследование, документ или bug | source `.memlog.md` → implementation spec lifecycle; NOW только pointer/action |
+| `change` | Изменение продукта, кода, данных, архитектуры или документа, которому нужен принятый contract | source `.memlog.md` → implementation spec lifecycle; NOW только pointer/action |
 | `bmm-project` | Продукт с утверждёнными epics/stories | BMM `sprint-status.yaml` владеет очередью; NOW указывает на одну выбранную story/action |
 
-Не меняйте lane в середине work item без decision, migration step и нового handoff. Этот минимальный шаблон преднамеренно не поддерживает GDS: игровой workflow создаётся как отдельная среда с отдельным owner matrix, а не добавляется к BMM.
+Не меняйте lane в середине work item без decision и migration step. Новый handoff нужен лишь если это создаёт реальную границу передачи. Этот минимальный шаблон преднамеренно не поддерживает GDS: игровой workflow создаётся как отдельная среда с отдельным owner matrix, а не добавляется к BMM.
 
 ## 2. Change lane
 
-1. Когда нет принятого контракта, `NOW.next_action` вызывает `bmad-spec` с точным input set.
+1. Когда работа изменяет долговечный продуктовый или репозиторный результат и ещё нет принятого контракта, `NOW.next_action` вызывает `bmad-spec` с точным input set.
 2. `bmad-spec` создаёт workspace в `_bmad-output/specs/spec-<slug>/`. Его `.memlog.md` — source of record; `SPEC.md` и companions — производные, их не редактируют вручную.
 3. После принятия source contract NOW хранит `source_memlog` (канонический журнал решений) и `source_contract` (производный `SPEC.md`). Companions перечисляются только в `next_action.input_paths`, если действительно нужны действию.
 4. Build вызывается с явным `source_contract` в `next_action.input_paths`. Его implementation spec в `_bmad-output/implementation-artifacts/` получает frontmatter pointer `source_contract: <relative path to SPEC.md>` и при необходимости `source_memlog: <relative path to .memlog.md>`.
 5. Требования не копируются между уровнями. Build spec содержит только реализационные задачи, verification и lifecycle.
 6. После review/verification NOW указывает на следующий один action или закрывает work item.
+
+### Лёгкий безопасный маршрут
+
+Короткая read-only проверка с вручную переданными несекретными входами может идти из краткого решения прямо к verification: зафиксируйте цель, границы, разрешённые входы и результат в `NOW`/evidence. Не создавайте `bmad-spec`, implementation contract или build, если тест не меняет продукт, код, данные или архитектуру. Если тест превращается в долговечное изменение — создайте один source contract до реализации.
 
 ## 3. BMM project lane
 
@@ -35,4 +39,4 @@
 
 ## 5. Связь с новым чатом
 
-BMAD помогает выполнять workflow, но не создаёт автоматически новый пользовательский чат и не переносит в него транскрипт. Межчатовый слой — `NOW.yaml` + immutable handoff + Git. При `migration.state: ready` `NOW.last_handoff` обязателен; во время `INIT-001` промежуточный handoff допустим, но не означает готовность среды. Это сознательная часть среды, а не скрытая функция одного skill.
+BMAD помогает выполнять workflow, но не создаёт автоматически новый пользовательский чат и не переносит в него transcript. Межчатовый слой — `NOW.yaml` + immutable handoff + Git. При `migration.state: ready` `NOW.last_handoff` обязателен как последний переносимый checkpoint, но не обязан обновляться после каждого внутреннего шага. Новый чат нужен только на реальной границе работы; короткие вопросы, тесты, commits и переходы фазы остаются в текущем чате.

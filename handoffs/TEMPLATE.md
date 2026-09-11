@@ -1,12 +1,12 @@
 # H-<UTC>-<work-id>
 
-> Скопируйте этот файл, замените все `<…>` и затем больше не меняйте его после commit.
+> Скопируйте этот файл только для настоящей границы передачи, замените все `<…>` и затем больше не меняйте его после commit.
 
 ## Граница передачи
 
 - **Создано (UTC):** `<YYYY-MM-DDTHH:MM:SSZ>`
 - **Work item:** `<id and short title>`
-- **Завершённый action:** `<NOW.next_action.id that was performed>`
+- **Завершённый milestone / action:** `<what this checkpoint preserves>`
 - **Commit marker:** `handoff:<UTC>-<work-id>`
 - **Base revision до handoff:** `<git HEAD before this handoff commit, or “no-git-yet”>`
 - **Предыдущий handoff:** `<path or null>`
@@ -29,9 +29,9 @@
 - **Результат:** `<pass | fail | not-run with reason>`
 - **Evidence:** `<relative path or none>`
 
-## Следующий action
+## Следующий action на момент checkpoint
 
-- **ID:** `<must equal control/NOW.yaml next_action.id>`
+- **ID:** `<must equal control/NOW.yaml next_action.id in this handoff commit>`
 - **Ожидаемый результат:** `<one bounded outcome>`
 - **Blocker / вопрос владельцу:** `<none or one concrete question>`
 
@@ -41,4 +41,4 @@
 - **Почему:** `<one concrete reason>`
 - **Готовая фраза для нового чата:** `Прочитай control/START-NEW-CHAT.md и выполни текущий next_action.`
 
-Полный hash этого же handoff commit здесь намеренно не обязателен: он неизвестен до создания commit. Новый чат находит commit по `Commit marker` в Git history и сверяет актуальный HEAD с `NOW.yaml`.
+Полный hash этого же handoff commit здесь намеренно не обязателен: он неизвестен до создания commit. Проверка находит commit по `Commit marker`, сверяет исторический `NOW.yaml` из checkpoint, а затем сверяет актуальный HEAD и текущий `NOW.yaml`. Обычные commits после checkpoint допустимы.

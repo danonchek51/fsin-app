@@ -1,6 +1,6 @@
 # Состояния диспетчера
 
-`active_work.dispatch_state` описывает только состояние **передачи и следующего действия**. Он не заменяет lifecycle нативного BMAD contract и не копирует его status. Готовность самой среды хранится отдельно в `migration.state`; нельзя выводить её из наличия handoff или из длины истории чата.
+`active_work.dispatch_state` описывает состояние текущей работы и следующего действия. Он не заменяет lifecycle нативного BMAD contract и не копирует его status. Готовность среды хранится отдельно в `migration.state`; её нельзя выводить из наличия handoff или длины истории чата.
 
 | State | Значение | Допустимый следующий шаг |
 | --- | --- | --- |
@@ -17,7 +17,8 @@
 - После ответа владельца восстановите `dispatch_state` из `resume_state`, затем очистите `blocker` и `resume_state` и создайте один новый action.
 - В остальных состояниях `blocker: null` и `resume_state: null`.
 - `bmad-build` требует `source_contract`; `implementation` action требует и `source_contract`, и `implementation_contract`.
-- После каждого законченного action обновляются state, один `next_action`, handoff и `NOW.last_handoff`.
+- После долговечного изменения обновляются state и один `next_action`. Handoff создаётся только на реальной границе передачи, milestone, паузе или долговечном блокере.
+- `NOW.last_handoff` — последний переносимый checkpoint. Его next action может быть старше текущего `NOW.next_action`; при продолжении всегда приоритетен текущий `NOW.yaml`.
 
 ## Bootstrap готовности
 

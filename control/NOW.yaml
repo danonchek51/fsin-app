@@ -1,7 +1,7 @@
 # Тонкий диспетчер. Bootstrap завершён; агент ждёт только одного решения владельца.
 schema_version: 1
 profile: control/WORKSPACE-PROFILE.yaml
-last_handoff: handoffs/H-20260910T170000Z-ONBOARD-001-CONTINUITY-HARDENING.md
+last_handoff: handoffs/H-20260911T111103Z-ONBOARD-001-LEAN-WORKFLOW.md
 
 active_work:
   id: ONBOARD-001
@@ -32,7 +32,6 @@ next_action:
   expected_outputs:
     - control/NOW.yaml
     - docs/PROJECT-CHARTER.md
-    - handoffs/
   done_when:
     - "Владелец назвал одну цель, пользователя и наблюдаемый результат."
     - "Ответ сохранён в каноническом artifact до planning или implementation."

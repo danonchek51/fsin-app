@@ -30,6 +30,7 @@ $requiresInstalledRuntime = $false
 $isOperational = $false
 $handoffMarker = $null
 $handoffRelativePath = $null
+$handoffText = $null
 $continuityMethod = $null
 $continuityRemoteName = $null
 $continuityEvidencePath = $null
@@ -419,12 +420,6 @@ if ((Test-Path -LiteralPath $nowPath -PathType Leaf) -and (Test-Path -LiteralPat
                 if ($handoffText -match '<[^>]+>') {
                     Add-CheckError('The last handoff still contains unfilled placeholders.')
                 }
-                if (-not [string]::IsNullOrWhiteSpace($nextActionId)) {
-                    $expectedIdPattern = '(?m)^-\s+\*\*ID:\*\*\s*' + [regex]::Escape($nextActionId) + '\s*$'
-                    if (-not [regex]::IsMatch($handoffText, $expectedIdPattern)) {
-                        Add-CheckError('The last handoff does not name the same next_action.id as NOW.yaml.')
-                    }
-                }
                 $markerMatch = [regex]::Match($handoffText, '(?m)^-\s+\*\*Commit marker:\*\*\s*(?<marker>[^\r\n]+)')
                 if (-not $markerMatch.Success -or $markerMatch.Groups['marker'].Value.Trim() -match '^<') {
                     Add-CheckError('The last handoff is missing a concrete Commit marker.')
@@ -446,12 +441,6 @@ if ((Test-Path -LiteralPath $nowPath -PathType Leaf) -and (Test-Path -LiteralPat
             $handoffText = Get-Content -LiteralPath $handoffPath -Raw
             if ($handoffText -match '<[^>]+>') {
                 Add-CheckError('The last handoff still contains unfilled placeholders.')
-            }
-            if (-not [string]::IsNullOrWhiteSpace($nextActionId)) {
-                $expectedIdPattern = '(?m)^-\s+\*\*ID:\*\*\s*' + [regex]::Escape($nextActionId) + '\s*$'
-                if (-not [regex]::IsMatch($handoffText, $expectedIdPattern)) {
-                    Add-CheckError('The last handoff does not name the same next_action.id as NOW.yaml.')
-                }
             }
             $markerMatch = [regex]::Match($handoffText, '(?m)^-\s+\*\*Commit marker:\*\*\s*(?<marker>[^\r\n]+)')
             if (-not $markerMatch.Success -or $markerMatch.Groups['marker'].Value.Trim() -match '^<') {
@@ -555,7 +544,7 @@ if ((Test-Path -LiteralPath $gitDirectory) -and $null -ne $gitCommand) {
                     '(?m)^' + [regex]::Escape($headRevision) + '\s+' + [regex]::Escape($expectedRemoteRef) + '$'
                 )
                 if (-not $headOnCurrentRemoteBranch) {
-                    Add-CheckError("The continuity remote branch $expectedRemoteRef does not contain the current HEAD. Push the handoff commit to the current branch before postcommit validation.")
+                    Add-CheckError("The continuity remote branch $expectedRemoteRef does not contain the current HEAD. Push the current commit to the current branch before postcommit validation.")
                 }
             }
             else {
@@ -565,17 +554,59 @@ if ((Test-Path -LiteralPath $gitDirectory) -and $null -ne $gitCommand) {
     }
 
     if ($null -ne $handoffMarker -and $Phase -eq 'postcommit') {
-        $headMessage = @(& git -C $script:rootPath log -1 --format=%B HEAD 2>$null) -join "`n"
-        if (-not [regex]::IsMatch($headMessage, [regex]::Escape($handoffMarker))) {
-            Add-CheckError('The current HEAD commit does not contain the marker declared by NOW.last_handoff.')
+        # A handoff is a portable checkpoint, not a requirement for every later commit.
+        # Validate the commit that first added the declared handoff, then allow ordinary
+        # commits and pushes to advance the project in the same chat.
+        $handoffCommit = @(& git -C $script:rootPath log --diff-filter=A -1 --format=%H -- $handoffRelativePath 2>$null) -join ''
+        if ([string]::IsNullOrWhiteSpace($handoffCommit)) {
+            Add-CheckError('Cannot find the commit that added NOW.last_handoff.')
         }
         else {
-            $commitFiles = @(& git -C $script:rootPath show --format= --name-only HEAD 2>$null)
-            if ($commitFiles -notcontains $handoffRelativePath) {
-                Add-CheckError('The current HEAD handoff commit does not include the declared handoff file.')
+            & git -C $script:rootPath merge-base --is-ancestor $handoffCommit HEAD 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                Add-CheckError('The commit that added NOW.last_handoff is not reachable from current HEAD.')
             }
-            if ($commitFiles -notcontains 'control/NOW.yaml') {
-                Add-CheckError('The current HEAD handoff commit does not include control/NOW.yaml.')
+            else {
+                $handoffCommitMessage = @(& git -C $script:rootPath log -1 --format=%B $handoffCommit 2>$null) -join "`n"
+                if (-not [regex]::IsMatch($handoffCommitMessage, [regex]::Escape($handoffMarker))) {
+                    Add-CheckError('The handoff commit does not contain the marker declared by NOW.last_handoff.')
+                }
+
+                $handoffCommitFiles = @(& git -C $script:rootPath show --format= --name-only $handoffCommit 2>$null)
+                if ($handoffCommitFiles -notcontains $handoffRelativePath) {
+                    Add-CheckError('The handoff commit does not include the declared handoff file.')
+                }
+                if ($handoffCommitFiles -notcontains 'control/NOW.yaml') {
+                    Add-CheckError('The handoff commit does not include control/NOW.yaml.')
+                }
+
+                $historicalNowSpec = $handoffCommit + ':control/NOW.yaml'
+                $historicalNow = @(& git -C $script:rootPath show $historicalNowSpec 2>$null) -join "`n"
+                $historicalLastHandoffMatch = [regex]::Match($historicalNow, '(?m)^last_handoff:\s*(?<path>[^\r\n#]+)')
+                if (-not $historicalLastHandoffMatch.Success) {
+                    Add-CheckError('The handoff commit has no NOW.last_handoff value.')
+                }
+                else {
+                    $historicalLastHandoff = $historicalLastHandoffMatch.Groups['path'].Value.Trim().Trim('`').Trim('"').Trim("'")
+                    if ($historicalLastHandoff.Replace('\\', '/') -ne $handoffRelativePath) {
+                        Add-CheckError('The handoff commit NOW.last_handoff does not point to its declared handoff file.')
+                    }
+                }
+
+                $historicalNextMatch = [regex]::Match($historicalNow, '(?ms)^next_action:\s*\r?\n\s*id:\s*(?<id>[^\r\n#]+)')
+                if (-not $historicalNextMatch.Success) {
+                    Add-CheckError('Cannot parse next_action.id from NOW.yaml in the handoff commit.')
+                }
+                elseif ([string]::IsNullOrWhiteSpace($handoffText)) {
+                    Add-CheckError('Cannot read the declared handoff while validating its checkpoint.')
+                }
+                else {
+                    $historicalNextActionId = $historicalNextMatch.Groups['id'].Value.Trim().Trim('`').Trim('"').Trim("'")
+                    $expectedIdPattern = '(?m)^-\s+\*\*ID:\*\*\s*' + [regex]::Escape($historicalNextActionId) + '\s*$'
+                    if (-not [regex]::IsMatch($handoffText, $expectedIdPattern)) {
+                        Add-CheckError('The handoff does not name the next_action.id that was current when its checkpoint was created.')
+                    }
+                }
             }
         }
     }
